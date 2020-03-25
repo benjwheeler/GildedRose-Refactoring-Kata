@@ -1,69 +1,101 @@
 export class Item {
-    name: string;
-    sellIn: number;
-    quality: number;
+  name: string;
+  sellIn: number;
+  quality: number;
 
-    constructor(name, sellIn, quality) {
-        this.name = name;
-        this.sellIn = sellIn;
-        this.quality = quality;
-    }
+  constructor(name, sellIn, quality) {
+    this.name = name;
+    this.sellIn = sellIn;
+    this.quality = quality;
+  }
 }
 
-export class GildedRose {
-    items: Array<Item>;
+interface IGildedRose {
+  items: Array<Item>;
+  updateQuality: () => Array<Item>;
+}
 
-    constructor(items = [] as Array<Item>) {
-        this.items = items;
+export class GildedRose implements IGildedRose {
+  items: Array<Item>;
+
+  constructor(items = [] as Array<Item>) {
+    this.items = items;
+  }
+
+  private coerceQuality: (q: number) => number = quality =>
+    Math.min(50, Math.max(0, quality));
+
+  private updateGenericItem(item: Item): Item {
+    return {
+      name: item.name,
+      sellIn: item.sellIn - 1,
+      quality: this.coerceQuality(item.quality - 1)
+    };
+  }
+
+  private updateAgedBrie(item: Item): Item {
+    return {
+      name: item.name,
+      sellIn: item.sellIn - 1,
+      quality: this.coerceQuality(item.quality + 1)
+    };
+  }
+
+  private updateSulfuras(item: Item): Item {
+    return {
+      name: item.name,
+      sellIn: item.sellIn,
+      quality: 80
+    };
+  }
+
+  private updateBackstagePasses: (item: Item) => Item = item => {
+    const newSellIn = item.sellIn - 1;
+    let quality: number;
+
+    if (newSellIn < 10 && newSellIn >= 5) {
+      quality = item.quality + 2;
+    } else if (newSellIn < 5 && newSellIn >= 0) {
+      quality = item.quality + 3;
+    } else if (newSellIn < 0) {
+      quality = 0;
+    } else {
+      quality = item.quality + 1;
     }
 
-    updateQuality() {
-        for (let i = 0; i < this.items.length; i++) {
-            if (this.items[i].name != 'Aged Brie' && this.items[i].name != 'Backstage passes to a TAFKAL80ETC concert') {
-                if (this.items[i].quality > 0) {
-                    if (this.items[i].name != 'Sulfuras, Hand of Ragnaros') {
-                        this.items[i].quality = this.items[i].quality - 1
-                    }
-                }
-            } else {
-                if (this.items[i].quality < 50) {
-                    this.items[i].quality = this.items[i].quality + 1
-                    if (this.items[i].name == 'Backstage passes to a TAFKAL80ETC concert') {
-                        if (this.items[i].sellIn < 11) {
-                            if (this.items[i].quality < 50) {
-                                this.items[i].quality = this.items[i].quality + 1
-                            }
-                        }
-                        if (this.items[i].sellIn < 6) {
-                            if (this.items[i].quality < 50) {
-                                this.items[i].quality = this.items[i].quality + 1
-                            }
-                        }
-                    }
-                }
-            }
-            if (this.items[i].name != 'Sulfuras, Hand of Ragnaros') {
-                this.items[i].sellIn = this.items[i].sellIn - 1;
-            }
-            if (this.items[i].sellIn < 0) {
-                if (this.items[i].name != 'Aged Brie') {
-                    if (this.items[i].name != 'Backstage passes to a TAFKAL80ETC concert') {
-                        if (this.items[i].quality > 0) {
-                            if (this.items[i].name != 'Sulfuras, Hand of Ragnaros') {
-                                this.items[i].quality = this.items[i].quality - 1
-                            }
-                        }
-                    } else {
-                        this.items[i].quality = this.items[i].quality - this.items[i].quality
-                    }
-                } else {
-                    if (this.items[i].quality < 50) {
-                        this.items[i].quality = this.items[i].quality + 1
-                    }
-                }
-            }
-        }
+    return {
+      name: item.name,
+      sellIn: newSellIn,
+      quality: this.coerceQuality(quality)
+    };
+  };
 
-        return this.items;
-    }
+  private updateConjured: (item: Item) => Item = item => ({
+    name: item.name,
+    sellIn: item.sellIn - 1,
+    quality: this.coerceQuality(item.quality - 2)
+  });
+
+  updateQuality() {
+    this.items = this.items.map(item => {
+      switch (item.name) {
+        case "Aged Brie":
+          return this.updateAgedBrie(item);
+
+        case "Sulfuras, Hand of Ragnaros":
+          return this.updateSulfuras(item);
+
+        case "Backstage passes to a TAFKAL80ETC concert":
+          return this.updateBackstagePasses(item);
+
+        case "Conjured Mana Cake":
+          return this.updateConjured(item);
+
+        default:
+          return this.updateGenericItem(item);
+      }
+    });
+
+    return this.items;
+  }
 }
