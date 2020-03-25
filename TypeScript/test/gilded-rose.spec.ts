@@ -128,4 +128,14 @@ describe("Gilded Rose", function() {
       expect(items[0].quality).to.equal(0);
     });
   });
+
+  describe("Conjured", () => {
+    it("Quality decreases by 2", () => {
+      const gildedRose = new GildedRose([new Item("Conjured Mana Cake", 2, 4)]);
+      const items = gildedRose.updateQuality();
+
+      expect(items[0].sellIn).to.equal(1);
+      expect(items[0].quality).to.equal(2);
+    });
+  });
 });
